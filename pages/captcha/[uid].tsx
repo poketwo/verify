@@ -1,5 +1,7 @@
 import { CheckCircleIcon, ExclamationIcon } from "@heroicons/react/solid";
 import classd from "classd";
+import { GetServerSideProps } from "next";
+import { useRouter } from "next/dist/client/router";
 import { useCallback, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -13,7 +15,7 @@ const Alert = ({ success }: AlertProps) => {
   const title = success ? "Success!" : "Error";
   const description = success
     ? "Thanks for verifying! You may now close this page."
-    : "Could not verify. Please try again.";
+    : "An error occurred while verifying. Please try again.";
 
   return (
     <div className={classd`rounded-md bg-${color}-50 p-4 w-full`}>
@@ -37,12 +39,12 @@ const Alert = ({ success }: AlertProps) => {
   );
 };
 
-const Page = () => {
+const Page = ({ uid }) => {
   const [token, setToken] = useState<string>();
   const [success, setSuccess] = useState<boolean>();
 
   const handleVerify = async () => {
-    const resp = await fetch(`/api/recaptcha?token=${token}`, {
+    const resp = await fetch(`/api/recaptcha?token=${token}&uid=${uid}`, {
       method: "POST",
     });
     setSuccess(resp.ok);
@@ -63,7 +65,7 @@ const Page = () => {
         <button
           type="button"
           className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          // disabled={token === undefined}
+          disabled={token === undefined}
           onClick={handleVerify}
         >
           Verify
@@ -74,3 +76,15 @@ const Page = () => {
 };
 
 export default Page;
+
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
+  const { uid } = query;
+
+  if (typeof uid !== "string" || !/^\d+$/.test(uid)) {
+    return { notFound: true };
+  }
+
+  return {
+    props: { uid },
+  };
+};

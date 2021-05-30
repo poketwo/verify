@@ -6,8 +6,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(405).end();
   }
 
-  const { token } = req.query;
+  const { token, uid } = req.query;
   if (typeof token !== "string") {
+    res.status(400).end();
+    return;
+  }
+  if (typeof uid !== "string" || !/^\d+$/.test(uid)) {
     res.status(400).end();
     return;
   }
@@ -25,11 +29,26 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const json = (await resp.json()) as { success: boolean };
 
-  if (json.success) {
-    res.status(204).end();
-  } else {
+  if (!json.success) {
     res.status(400).end();
+    return;
   }
+
+  const wh_resp = await fetch(process.env.WEBHOOK_URL, {
+    method: "POST",
+    headers: new Headers({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      uid,
+      secret: process.env.WEBHOOK_SECRET,
+    }),
+  });
+
+  if (!wh_resp.ok) {
+    res.status(500).end();
+    return;
+  }
+
+  res.status(204).end();
 };
 
 export default handler;
