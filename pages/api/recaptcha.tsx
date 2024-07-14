@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import fetch, { Headers } from "node-fetch";
+
+const WEBHOOK_URL = process.env.WEBHOOK_URL || (() => { throw "Missing WEBHOOK_URL"; })()
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "POST") {
@@ -34,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const wh_resp = await fetch(process.env.WEBHOOK_URL, {
+  const wh_resp = await fetch(WEBHOOK_URL, {
     method: "POST",
     headers: new Headers({ "Content-Type": "application/json" }),
     body: JSON.stringify({

@@ -1,9 +1,9 @@
 import { CheckCircleIcon, ExclamationIcon } from "@heroicons/react/solid";
-import classd from "classd";
 import { GetServerSideProps } from "next";
-import { useRouter } from "next/dist/client/router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || (() => { throw "Missing RECAPTCHA_SITE_KEY"; })()
 
 type AlertProps = {
   success: boolean;
@@ -18,19 +18,19 @@ const Alert = ({ success }: AlertProps) => {
     : "An error occurred while verifying. Please try again.";
 
   return (
-    <div className={classd`rounded-md bg-${color}-50 p-4 w-full`}>
+    <div className={`rounded-md bg-${color}-50 p-4 w-full`}>
       <div className="flex">
         <div className="flex-shrink-0">
           <Icon
-            className={classd`h-5 w-5 text-${color}-400`}
+            className={`h-5 w-5 text-${color}-400`}
             aria-hidden="true"
           />
         </div>
         <div className="ml-3">
-          <h3 className={classd`text-sm font-medium text-${color}-800`}>
+          <h3 className={`text-sm font-medium text-${color}-800`}>
             {title}
           </h3>
-          <div className={classd`mt-2 text-sm text-${color}-700`}>
+          <div className={`mt-2 text-sm text-${color}-700`}>
             <p>{description}</p>
           </div>
         </div>
@@ -39,9 +39,13 @@ const Alert = ({ success }: AlertProps) => {
   );
 };
 
-const Page = ({ uid }) => {
-  const [token, setToken] = useState<string>();
-  const [success, setSuccess] = useState<boolean>();
+type PageProps = {
+  uid: string;
+}
+
+const Page = ({ uid }: PageProps) => {
+  const [token, setToken] = useState<string | undefined>();
+  const [success, setSuccess] = useState<boolean | undefined>();
 
   const handleVerify = async () => {
     const resp = await fetch(`/api/recaptcha?token=${token}&uid=${uid}`, {
@@ -58,8 +62,8 @@ const Page = ({ uid }) => {
         <h1 className="text-2xl font-bold">Please verify to continue</h1>
 
         <ReCAPTCHA
-          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-          onChange={setToken}
+          sitekey={RECAPTCHA_SITE_KEY}
+          onChange={(token) => setToken(token ?? undefined)}
         />
 
         <button
@@ -77,7 +81,7 @@ const Page = ({ uid }) => {
 
 export default Page;
 
-export const getServerSideProps: GetServerSideProps = async ({ query }) => {
+export const getServerSideProps: GetServerSideProps<PageProps> = async ({ query }) => {
   const { uid } = query;
 
   if (typeof uid !== "string" || !/^\d+$/.test(uid)) {
