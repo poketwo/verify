@@ -41,7 +41,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { origin } = absoluteUrl(req);
   const url = oauth.generateAuthUrl({
     state,
-    scope: "identify email",
+    scope: "identify",
     redirectUri: `${origin}/api/callback`,
   });
 
